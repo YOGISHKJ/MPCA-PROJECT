@@ -1,0 +1,77 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <DHT.h>
+
+// LCD
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// DHT
+#define DHTPIN 2
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+// Pins
+#define BUZZER 8
+#define RAIN_PIN 9
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  Serial.begin(9600);
+
+  dht.begin();
+
+  pinMode(BUZZER, OUTPUT);
+  pinMode(RAIN_PIN, INPUT);
+}
+
+void loop() {
+
+  // Read sensors
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  int gas = analogRead(A1);
+  int moisture = analogRead(A2);
+  int light = analogRead(A3);
+  int rain = digitalRead(RAIN_PIN);
+
+  // Error check
+  if (isnan(temperature) || isnan(humidity)) {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("DHT ERROR!");
+    delay(2000);
+    return;
+  }
+
+  // Buzzer (rain only)
+  digitalWrite(BUZZER, rain == LOW ? HIGH : LOW);
+
+  // DISPLAY ALL DATA
+  lcd.clear();
+
+  // Row 1
+  lcd.setCursor(0,0);
+  lcd.print("T:");
+  lcd.print((int)temperature);
+
+  lcd.print(" H:");
+  lcd.print((int)humidity);
+
+  lcd.print(" G:");
+  lcd.print(gas);
+
+  // Row 2
+  lcd.setCursor(0,1);
+  lcd.print("R:");
+  lcd.print(rain == LOW ? "Y" : "N");
+
+  lcd.print(" M:");
+  lcd.print(moisture);
+
+  lcd.print(" L:");
+  lcd.print(light);
+
+  delay(2000);
+}
